@@ -1,27 +1,40 @@
-from django.db import models
-from django.contrib.auth.models import User
-class Course(models.Model):
- name=models.CharField(max_length=200)
- description=models.TextField(blank=True)
- def __str__(self): return self.name
-class Lesson(models.Model):
- course=models.ForeignKey(Course,on_delete=models.CASCADE,related_name='lessons')
- title=models.CharField(max_length=200)
- content=models.TextField(blank=True)
- def __str__(self): return self.title
+# Add these three models to the BOTTOM of onlinecourse/models.py
+# (after Course, Lesson, Instructor, Learner and Enrollment).
+# models is already imported at the top of that file: from django.db import models
+
+
 class Question(models.Model):
- course=models.ForeignKey(Course,on_delete=models.CASCADE,related_name='questions')
- question_text=models.CharField(max_length=500)
- def __str__(self): return self.question_text
+    # Each question belongs to one course
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    question_text = models.CharField(max_length=500)
+    # Points awarded for answering this question correctly
+    grade = models.IntegerField(default=1)
+
+    def __str__(self):
+        return "Question: " + self.question_text
+
+    # Returns True only if the selected choices are exactly the correct ones
+    def is_get_score(self, selected_ids):
+        correct_ids = set(
+            self.choice_set.filter(is_correct=True).values_list("id", flat=True)
+        )
+        return correct_ids == set(int(i) for i in selected_ids)
+
+
 class Choice(models.Model):
- question=models.ForeignKey(Question,on_delete=models.CASCADE,related_name='choices')
- choice_text=models.CharField(max_length=300)
- is_correct=models.BooleanField(default=False)
- def __str__(self): return self.choice_text
+    # Each choice belongs to one question
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    choice_text = models.CharField(max_length=500)
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.choice_text
+
+
 class Submission(models.Model):
- user=models.ForeignKey(User,on_delete=models.CASCADE)
- course=models.ForeignKey(Course,on_delete=models.CASCADE)
- score=models.PositiveIntegerField(default=0)
- total_questions=models.PositiveIntegerField(default=0)
- submitted_at=models.DateTimeField(auto_now_add=True)
- def __str__(self): return f'{self.user.username} - {self.course.name}: {self.score}/{self.total_questions}'
+    # A submission belongs to one enrollment and holds the selected choices
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
+    choices = models.ManyToManyField(Choice)
+
+    def __str__(self):
+        return "Submission #" + str(self.id)
