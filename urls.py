@@ -1,4 +1,26 @@
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from . import views
-app_name='onlinecourse'
-urlpatterns=[path('',views.course_list,name='course_list'),path('course/<int:course_id>/',views.course_details,name='course_details'),path('course/<int:course_id>/submit/',views.submit,name='submit'),path('result/<int:submission_id>/',views.show_exam_result,name='show_exam_result')]
+
+app_name = 'onlinecourse'
+
+urlpatterns = [
+    # Starter routes (keep these as they are in your project)
+    path(route='', view=views.CourseListView.as_view(), name='index'),
+    path('registration/', views.registration_request, name='registration'),
+    path('login/', views.login_request, name='login'),
+    path('logout/', views.logout_request, name='logout'),
+    path('<int:pk>/', views.CourseDetailsView.as_view(), name='course_details'),
+    path('<int:course_id>/enroll/', views.enroll, name='enroll'),
+
+    # Q6: exam routes
+    # Submits the exam answers for a course
+    path('course/<int:course_id>/submit/', views.submit, name='submit'),
+    # Shows the result of one submission for a course
+    path(
+        'course/<int:course_id>/submission/<int:submission_id>/result/',
+        views.show_exam_result,
+        name='show_exam_result',
+    ),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
